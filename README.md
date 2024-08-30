@@ -18,9 +18,9 @@
 
 ---
 
-## Usage examples
+# Usage examples
 
-#### LSTM bidirectional network
+### LSTM bidirectional network
 
 - configuration class implements all standard nn.Module class for FCNs, CNN, RNNs, AE, VAEs and transformers
 - design your network using python dictionary with key representing the order of layers in forward pass
@@ -129,7 +129,10 @@ At Batchidx 8 in epoch 0:  batchacc is 47.656250 and loss is 0.693732
 ```
 ---
 
-#### Implement seq2seq model from Ilya Sutskever paper https://arxiv.org/abs/1409.3215 for machine translation
+## Implement seq2seq model from Ilya Sutskever paper https://arxiv.org/abs/1409.3215 for machine translation
+
+![Hume image](/images/Hume.jfif){: style="width:200px; float:center;"}
+
 
 **Encoder LSTM network which generates context vectors for German texts**
 
@@ -188,7 +191,7 @@ seq2seq.trainseq2seq(teacher_forcing=0.5, clipping =1)
 
 ---
 
-#### Convolution Variational Auto encoder 
+## Convolution Variational Auto encoder 
 
 - Create two configuration objects , one for encoder with conv layers and second for decoder deconv side
 - The encoder net consists of conv->batchnorm->leakyrelu->dropout layers
