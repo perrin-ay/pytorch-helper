@@ -71,7 +71,7 @@ RNNpacked(
 
 ```
 
-**Training api for multilabel classification ( multiclass where more than one label is true)**
+**Training for multilabel classification ( multiclass where more than one label is true)**
 
 ```
 rnnnet.configureTraining(epochs = 10, lossfun = nn.BCEWithLogitsLoss(), optimizer='adam',lr=0.005,
@@ -127,6 +127,65 @@ At Batchidx 7 in epoch 0:  batchacc is 51.562500 and loss is 0.692961
 At Batchidx 8 in epoch 0:  batchacc is 47.656250 and loss is 0.693732 
 
 ```
+---
+
+#### Implement seq2seq model from Ilya Sutskever paper https://arxiv.org/abs/1409.3215 for machine translation
+
+**Encoder LSTM network which generates context vectors for German texts**
+
+```
+batch_size = 128
+embed_dims =  256
+hidden_dims = 512
+num_layers =  2
+dropout = 0.5
+
+# Encoder net for german texts
+
+confde  = configuration()
+embed_de = confde.embeddings(len(vocabularyde),embed_dims )
+lstm_de = confde.lstm(embed_dims,hidden_dims,num_layers=num_layers,dropout = dropout)
+drop_de =  confde.dropout(dropout)
+encoderlayers= {1:embed_de,2:drop_de, 3:lstm_de, 4:UnidirectionextractHiddenCell()}
+confde.configureRNN(rnnlayers = encoderlayers, params ={"batch_size":batch_size,"pretrained_embeddings" : False})
+
+encoderGerman = Net()
+encoderGerman.configureNetwork(confobj = {'RNN':[confde]}, RNN = True, networktest = False)
+
+```
+**Decoder LSTM network that takes encoder hidden states and english token inputs**
+```
+
+confen  = configuration()
+embed_en = confen.embeddings(len(vocabularyen),embed_dims )
+lstm_en = LSTMhc(embed_dims,hidden_dims,num_layers=num_layers,dropout = dropout)
+drop_en =  confen.dropout(dropout)
+linear  = Linearhc(infeatures = hidden_dims,outfeatures = len(vocabularyen)) 
+decoderlayers= {1:unsqueezeOnes(1), 2:embed_en,3:drop_en, 4:lstm_en,  5:linear}
+confen.configureRNN(rnnlayers = decoderlayers, params ={"batch_size":batch_size,"pretrained_embeddings" : False} )
+
+decoderEng = Net()
+decoderEng.configureNetwork(confobj = {'RNN':[confen]}, RNN = True,rnnhc = True, networktest = False)
+
+```
+**Create seq2seq network for end to end forward pass and backprop**
+```
+
+seq2seq  = Net()
+seq2seq.setupCuda()
+params ={'batch_size':128, 'src_vocab_len':len(vocabularyde), 'trg_vocab_len':len(vocabularyen),'device':seq2seq.device}
+seq2seq.net = Seq2Seq(encoderGerman.net, decoderEng.net, params = params)
+
+```
+**Training is autoregressive with next token prediction. Control teacher_forcing where 0 means fully autoregressive** 
+```
+
+seq2seq.configureTraining(epochs=1,lossfun=nn.CrossEntropyLoss(ignore_index = padding_value_en),optimizer='adam',lr=0.001, 
+                          weight_decay=0,momentum=0.9, prntsummary = True, gpu = False)
+seq2seq.trainseq2seq(teacher_forcing=0.5, clipping =1)
+
+```
+
 ---
 
 #### Convolution Variational Auto encoder 
@@ -192,11 +251,10 @@ deconvlayer = {16:linear1,17:reshape,
 
 confdecode.configureCNN(deconvlayers = deconvlayer, deconv_inputsize = confencode.convoutimgsize)
 
-print (confencode.convoutimgsize,confencode.convimgsizeperlayer, confencode.finaloutconvchannels )
-print (confdecode.deconvoutimgsize, confdecode.deconvfcin, confdecode.finaloutdeconvchannels, confdecode.deconvimgsizeperlayer)
-
 ```
+
 **Create encoder-decoder VAE network**
+
 ```
 
 vae = {'encoder':convlayer,'decoder':deconvlayer,'fcin':fcin,'zdims':200 } 
@@ -277,3 +335,5 @@ At Batchidx 8 in epoch 0:  batchacc abs error (mean if batches) is 0.242950 and 
 At Batchidx 9 in epoch 0:  batchacc abs error (mean if batches) is 0.242138 and loss is 4154.397949
 
 ```
+
+---
