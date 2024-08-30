@@ -131,7 +131,7 @@ At Batchidx 8 in epoch 0:  batchacc is 47.656250 and loss is 0.693732
 
 ## Implement seq2seq model from Ilya Sutskever paper https://arxiv.org/abs/1409.3215 for machine translation
 
-![Seq2Seq Network](https://github.com/user-attachments/assets/490763d1-0db7-43f8-b215-a6fb81a7937c)
+![Seq2Seq Network](https://github.com/user-attachments/assets/417177d9-9e58-4f0f-839b-9648961990f6)
 
 
 **Encoder LSTM network which generates context vectors for German texts**
