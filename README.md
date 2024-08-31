@@ -2,7 +2,7 @@
 
 ---
 
-- Less boilerplate. The goal with this library was to provide an easy and flexible approach to designing neural nets
+- Less boilerplate. The goal of this library is to provide an easy and flexible approach to designing neural nets
   
 - Built on top of pytorch and abstracts pytorch hooks to debug and monitor gradient flows, weights and activations
 
