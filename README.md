@@ -20,9 +20,97 @@
 
 # Usage examples
 
-### LSTM bidirectional network
+## Convolution networks
 
-- configuration class implements all standard nn.Module class for FCNs, CNN, RNNs, AE, VAEs and transformers
+- Configuration class implements all standard nn.Module classes for FCNs, CNN, RNNs, AE, VAEs and transformers
+- Design your network using python dictionary with key representing the order of layers in forward pass
+- The configureCNN and configureFCN take these dictionaries and converts to pytorch moduledicts/modulelist and registers all elements appropriately as pytorch modules
+- The configureCNN takes the CNN layers and input image size and returns final output channels, final output size, and per layer channels and size
+- configureNetwork creates a pytorch network with forward calling pytorch registered modules in increasing order of keys in dictionary CNNlayer and FCNlayer
+
+```
+conf =  configuration()
+
+conv1 = conf.conv(1, 10, 5, 1, 1)
+pool1= conf.maxpool(2)
+conv2 = conf.conv(10,20,5,1,1)
+pool2= conf.maxpool(2)
+relu = conf.relu()
+flat = conf.flatten()
+
+CNNlayer = {1:conv1,
+            2:relu,
+            3:pool1,
+            4:conv2,
+            5:relu,
+            6:pool2,
+            7:flat}
+
+conf.configureCNN(convlayers = CNNlayer,inputsize = [28,28])
+
+fcin = conf.fcin
+linear1 = conf.linear(fcin,50)
+linear2 =conf.linear(50,10)
+
+FCNlayer = {8:linear1,
+            9:relu,
+            10:linear2}
+
+conf.configureFCN(layers = FCNlayer)
+
+mnistnet = Net()
+mnistnet.configureNetwork(confobj = {'CNN':[conf],'FCN':[conf]}, networktest =True)
+print (mnistnet.net)
+
+ANN(
+  (layers): ModuleDict(
+    (1): Conv2d(1, 10, kernel_size=(5, 5), stride=(1, 1), padding=(1, 1))
+    (2): ReLU()
+    (3): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (4): Conv2d(10, 20, kernel_size=(5, 5), stride=(1, 1), padding=(1, 1))
+    (5): ReLU()
+    (6): MaxPool2d(kernel_size=2, stride=2, padding=0, dilation=1, ceil_mode=False)
+    (7): Flatten(start_dim=1, end_dim=-1)
+    (8): Linear(in_features=500, out_features=50, bias=True)
+    (9): ReLU()
+    (10): Linear(in_features=50, out_features=10, bias=True)
+  )
+)
+
+```
+
+**Tracing and training for multiclass classification**
+
+- hook_prnt_activations_stats hook is registered for layer  *(1): Conv2d(1, 10, kernel_size=(5, 5), stride=(1, 1), padding=(1, 1))*
+- Check ANNdebug to add your own hook functions. hook_prnt_activations_stats prints activation tensor size and the mean , min, max and variance of this output tensor of this layer during training
+- *results* contains train accuracy, test accuracy, and losses for each epoch. As well as misclassified on training and test set after final epoch of training
+  
+```
+
+mnistnet.configureTraining(epochs=10,lossfun=nn.CrossEntropyLoss(),optimizer='adam',lr=0.001, 
+                          weight_decay=0,momentum=0.9, prntsummary = True, gpu = False)
+
+h1 = mnistnet.net.layers['1'].register_forward_hook(hook_prnt_activations_stats('conv1stats')) 
+
+mnistnet.register_forward_callbacks.append(callback_prnt_allweights_stats(mnistnet.net))
+
+results = mnistnet.trainmulticlass()
+
+```
+
+**Plot loos and accuracy curves for train and test set**
+
+```
+
+mnistnet.lossplot()
+
+```
+
+---
+
+## LSTM bidirectional network
+
+- configuration class implements all standard nn.Module classes for FCNs, CNN, RNNs, AE, VAEs and transformers
 - design your network using python dictionary with key representing the order of layers in forward pass
 - ready to use pytorch custom classes like BidirectionextractHiddenfinal and hiddenBidirectional
 - BidirectionextractHiddenfinal extracts and returns the final hidden state from LSTM and hiddenBidirectional processes this and return the concatanated forwards and backwards hidden state
@@ -191,12 +279,109 @@ seq2seq.trainseq2seq(teacher_forcing=0.5, clipping =1)
 
 ---
 
+## Implement the transformer model from Attention Is All You Need paper https://proceedings.neurips.cc/paper_files/paper/2017/file/3f5ee243547dee91fbd053c1c4a845aa-Paper.pdf
+
+![Transformer Architecture](https://github.com/user-attachments/assets/8544c7f8-1fac-4bd8-93e6-06b0e5d57577)
+
+```
+INPUT_DIM = len(vocabularyde) # vocab of German
+OUTPUT_DIM = len(vocabularyen)# vocab of English
+HID_DIM= 256
+ENC_LAYERS = 3
+DEC_LAYERS = 3
+ENC_HEADS = 8
+DEC_HEADS = 8
+ENC_PF_DIM = 512
+DEC_PF_DIM = 512
+ENC_DROPOUT = 0.1
+DEC_DROPOUT = 0.1
+padding_value_de,padding_value_en = 0,0
+
+encoder  = Net()
+encoder.setupCuda()
+device = encoder.device
+encoder.net = EncoderSelfAttn(INPUT_DIM,HID_DIM, ENC_LAYERS, ENC_HEADS,ENC_PF_DIM,ENC_DROPOUT,device)
+
+decoder  = Net()
+decoder.net = DecoderSelfAttn(OUTPUT_DIM,HID_DIM, DEC_LAYERS, DEC_HEADS, DEC_PF_DIM, DEC_DROPOUT,device)
+
+seq2seq =  Net()
+seq2seq.net = Seq2SeqSelfAttn(encoder.net,decoder.net,padding_value_de,padding_value_en,device) 
+
+print (seq2seq.net)
+
+Seq2SeqSelfAttn(
+  (encoder): EncoderSelfAttn(
+    (token_embedding): Embedding(2000, 256)
+    (position_embedding): Embedding(100, 256)
+    (layers): ModuleList(
+      (0-2): 3 x EncoderLayer(
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (ff_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiHeadAttentionLayer(
+          (fc_q): Linear(in_features=256, out_features=256, bias=True)
+          (fc_k): Linear(in_features=256, out_features=256, bias=True)
+          (fc_v): Linear(in_features=256, out_features=256, bias=True)
+          (fc_o): Linear(in_features=256, out_features=256, bias=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (positionwise_feedforward): PositionwiseFeedforwardLayer(
+          (fc_1): Linear(in_features=256, out_features=512, bias=True)
+          (fc_2): Linear(in_features=512, out_features=256, bias=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+          (dropout2): Dropout(p=0.1, inplace=False)
+        )
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+    )
+    (dropout): Dropout(p=0.1, inplace=False)
+  )
+  (decoder): DecoderSelfAttn(
+    (token_embedding): Embedding(2000, 256)
+    (position_embedding): Embedding(100, 256)
+    (layers): ModuleList(
+      (0-2): 3 x DecoderLayer(
+        (self_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (enc_attn_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (ff_layer_norm): LayerNorm((256,), eps=1e-05, elementwise_affine=True)
+        (self_attention): MultiHeadAttentionLayer(
+          (fc_q): Linear(in_features=256, out_features=256, bias=True)
+          (fc_k): Linear(in_features=256, out_features=256, bias=True)
+          (fc_v): Linear(in_features=256, out_features=256, bias=True)
+          (fc_o): Linear(in_features=256, out_features=256, bias=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (encoder_attention): MultiHeadAttentionLayer(
+          (fc_q): Linear(in_features=256, out_features=256, bias=True)
+          (fc_k): Linear(in_features=256, out_features=256, bias=True)
+          (fc_v): Linear(in_features=256, out_features=256, bias=True)
+          (fc_o): Linear(in_features=256, out_features=256, bias=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+        )
+        (positionwise_feedforward): PositionwiseFeedforwardLayer(
+          (fc_1): Linear(in_features=256, out_features=512, bias=True)
+          (fc_2): Linear(in_features=512, out_features=256, bias=True)
+          (dropout): Dropout(p=0.1, inplace=False)
+          (dropout2): Dropout(p=0.1, inplace=False)
+        )
+        (dropout): Dropout(p=0.1, inplace=False)
+      )
+    )
+    (fc_out): Linear(in_features=256, out_features=2000, bias=True)
+    (dropout): Dropout(p=0.1, inplace=False)
+  )
+)
+
+```
+
+---
+
 ## Convolution Variational Auto encoder 
 
 - Create two configuration objects , one for encoder with conv layers and second for decoder deconv side
 - The encoder net consists of conv->batchnorm->leakyrelu->dropout layers
 - The decoder net consists of convtranspose - >batchnorm - >leakyrelu -> dropout layers
-- The configureCNN takes the encoder layers and input image size returns final output channels, final output size, and per layer chanels and size
+  
 
 ```
 confencode =  configuration()
