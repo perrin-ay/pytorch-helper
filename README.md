@@ -110,12 +110,9 @@ mnistnet.lossplot()
 
 ## LSTM bidirectional network
 
-- configuration class implements all standard nn.Module classes for FCNs, CNN, RNNs, AE, VAEs and transformers
-- design your network using python dictionary with key representing the order of layers in forward pass
-- ready to use pytorch custom classes like BidirectionextractHiddenfinal and hiddenBidirectional
+- ready to use RNN custom classes like BidirectionextractHiddenfinal and hiddenBidirectional
 - BidirectionextractHiddenfinal extracts and returns the final hidden state from LSTM and hiddenBidirectional processes this and return the concatanated forwards and backwards hidden state
-- configureRNN and configureFCN take these dictionaries and converts to pytorch moduledicts/modulelist and registers all elements appropriately as pytorch modules
-- configureNetwork creates a pytorch network with forward calling pytorch registered modules in increasing order of keys in dictionary rnnlayers and fcnlayers
+
 ```
 
 batch_size =128
