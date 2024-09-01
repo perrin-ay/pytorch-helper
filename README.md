@@ -98,7 +98,7 @@ results = mnistnet.trainmulticlass()
 
 ```
 
-**Plot loos and accuracy curves for train and test set**
+**Plot loss and accuracy curves for train and test set**
 
 ```
 
