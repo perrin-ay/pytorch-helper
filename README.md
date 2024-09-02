@@ -2,17 +2,17 @@
 
 ---
 
-- Built on top of pytorch
+- Built on top of pytorch.
   
 - The goal of this library is to provide an easy and flexible approach to designing neural nets.
   
-- Less boilerplate. Fully fleshed out and ready to use modules to build and train FFNs, CNNs, RNNs, LSTMs, GRUs, AEs, VAEs and transformer networks and quickly build custom and non standard networks 
+- Less boilerplate. Fully fleshed out and ready to use modules to build and train custom and non standard FFNs, CNNs, RNNs, LSTMs, GRUs, AEs, VAEs and transformer networks.
   
-- Trace and debug gradient flows, weights and activation and track and plot loss and accuracy curves with training api 
+- Trace and debug gradient flows, weights and activation and track and plot loss and accuracy curves with training api. 
 
 - Create model checkpoints and auto save model based on loss and accuracy criterias.
 
-- Extensible and customizable - easily add your own pytorch modules or debug and monitoring functions in forward or backward pass
+- Extensible and customizable - easily add your own pytorch modules or debug and monitoring functions in forward or backward pass.
 
 
 ---
