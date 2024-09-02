@@ -8,7 +8,7 @@
   
 - Less boilerplate. Fully fleshed out and ready to use modules to build and train custom and non standard FFNs, CNNs, RNNs, LSTMs, GRUs, AEs, VAEs and transformer networks.
   
-- Trace and debug gradient flows, weights and activation and track and plot loss and accuracy curves with training api. 
+- Trace and debug gradient flows, weights and activations, and track and plot loss and accuracy curves with training api. 
 
 - Create model checkpoints and auto save model based on loss and accuracy criterias.
 
